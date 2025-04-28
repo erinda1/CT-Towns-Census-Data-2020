@@ -1,0 +1,57 @@
+
+
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+st.title("CT Towns Census Data 2020")
+st.subheader("Team Members: Alice, Bob, Charlie")  # Replace with your team names
+
+
+url = "https://raw.githubusercontent.com/iantonios/dsc205/refs/heads/main/CT-towns-income-census-2020.csv"
+df = pd.read_csv(url)
+
+
+df.columns = df.columns.str.strip()
+
+counties = df['County'].unique()
+selected_county = st.selectbox("Select a County:", counties)
+
+county_df = df[df['County'] == selected_county]
+
+st.write(f"Cities and Towns in {selected_county}:")
+st.dataframe(county_df[['City/Town', 'Median Household Income']], width=500, height=200)
+
+min_income = int(df['Median Household Income'].min())
+max_income = int(df['Median Household Income'].max())
+
+income_range = st.slider(
+    "Select Median Household Income Range:",
+    min_value=min_income,
+    max_value=max_income,
+    value=(min_income, max_income)
+)
+
+
+income_filtered_df = df[
+    (df['Median Household Income'] >= income_range[0]) & 
+    (df['Median Household Income'] <= income_range[1])
+]
+
+
+st.write(f"Cities and Towns with Median Household Income between ${income_range[0]} and ${income_range[1]}:")
+st.dataframe(income_filtered_df[['City/Town', 'Median Household Income']], width=500, height=200)
+
+
+top5 = df.nlargest(5, 'Median Household Income')
+bottom5 = df.nsmallest(5, 'Median Household Income')
+top_bottom_df = pd.concat([top5, bottom5])
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.bar(top_bottom_df['City/Town'], top_bottom_df['Median Household Income'], color='skyblue')
+ax.set_xlabel("City/Town")
+ax.set_ylabel("Median Household Income ($)")
+ax.set_title("Top 5 and Bottom 5 Cities/Towns by Median Household Income")
+plt.xticks(rotation=45, ha='right')
+st.pyplot(fig)
